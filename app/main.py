@@ -17,6 +17,11 @@ def load_model():
         raise RuntimeError(f"Model file not found: {MODEL_PATH}")
     model = joblib.load(MODEL_PATH)
 
+
+@app.get("/")
+def root() -> dict:
+ return {"status": "ok", "service": "Iris ML API"}
+
 @app.get("/health")
 def health():
     return {"status": "healthy", "model_loaded": model is not None}
