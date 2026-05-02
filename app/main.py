@@ -13,7 +13,7 @@ model = None
 @app.on_event("startup")
 def load_model():
     global model
-    print(f"DEBUG: Looking for model at {MODEL_PATH}") # Це з'явиться в логах GitHub Actions
+    print(f"DEBUG: Looking for model at {MODEL_PATH}") 
     if not MODEL_PATH.exists():
         print("DEBUG: Model NOT FOUND")
         return
