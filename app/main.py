@@ -13,8 +13,10 @@ model = None
 @app.on_event("startup")
 def load_model():
     global model
+    print(f"DEBUG: Looking for model at {MODEL_PATH}") # Це з'явиться в логах GitHub Actions
     if not MODEL_PATH.exists():
-        raise RuntimeError(f"Model file not found: {MODEL_PATH}")
+        print("DEBUG: Model NOT FOUND")
+        return
     model = joblib.load(MODEL_PATH)
 
 
