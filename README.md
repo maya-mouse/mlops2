@@ -21,3 +21,21 @@
    source venv/bin/activate  # для Linux/macOS
    # або
    venv\Scripts\activate     # для Windows
+
+2. Встановіть залежності:
+   ```bash
+   pip install -r requirements.txt
+
+3. Натренуйте модель:
+   ```bash
+   python -m ml.train
+
+4. Запустіть сервер:
+   ```bash
+   uvicorn app.maiin:app --reload
+
+Посилання на деплой
+
+- Публічна адреса сервісу: https://mlops2-maya.onrender.com
+- Статус моделі: https://mlops2-maya.onrender.com/health
+- Документація API (Swagger): https://mlops2-maya.onrender.com/docs
