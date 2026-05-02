@@ -36,4 +36,3 @@ def test_predict_invalid_input():
  payload = {"sepal_length": "not-a-number"}
  response = client.post("/predict", json=payload)
  assert response.status_code == 422
-error
