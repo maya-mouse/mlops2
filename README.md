@@ -1,6 +1,6 @@
 # Лабораторна робота №2: CI/CD та ML API (Варіант 19)
 
-![CI Status](https://github.com/maya-mouse/ml-api-lab2/actions/workflows/ci.yml/badge.svg)
+![CI Status](https://github.com/maya-mouse/mlops2/actions/workflows/ci.ym/badge.svg)
 
 ## Опис проєкту
 Цей проєкт реалізує наскрізний MLOps-конвеєр для класифікації ірисів (Iris dataset). Сервіс побудований на FastAPI, контейнеризований за допомогою Docker та розгорнутий на платформі Render.
