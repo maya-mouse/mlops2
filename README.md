@@ -1,41 +1,170 @@
-# Лабораторна робота №2: CI/CD та ML API (Варіант 19)
+# Лабораторна робота №3
 
-[![CI](https://github.com/maya-mouse/mlops2/actions/workflows/ci.yml/badge.svg)](https://github.com/maya-mouse/mlops2/actions/workflows/ci.yml)
+## Моніторинг ML API та детекція проблем (Варіант 19)
 
-## Опис проєкту
-Цей проєкт реалізує наскрізний MLOps-конвеєр для класифікації ірисів (Iris dataset). Сервіс побудований на FastAPI, контейнеризований за допомогою Docker та розгорнутий на платформі Render.
+---
 
-## Стек технологій
-* **Мова**: Python 3.11
-* **ML**: Scikit-learn, Joblib
-* **API**: FastAPI, Pydantic, Uvicorn
-* **CI/CD**: GitHub Actions
-* **Контейнеризація**: Docker
-* **Деплой**: Render
+##  Опис системи
 
-## Як запустити локально
+Даний проєкт є розширенням ML-сервісу для класифікації ірисів (Iris Dataset), до якого додано повноцінний шар спостережуваності (**observability**).
 
-1. Створіть віртуальне середовище:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # для Linux/macOS
-   # або
-   venv\Scripts\activate     # для Windows
+Система дозволяє:
 
-2. Встановіть залежності:
-   ```bash
-   pip install -r requirements.txt
+* відстежувати технічні метрики (latency, RPS),
+* аналізувати ML-метрики (розподіл прогнозів, впевненість моделі),
+* автоматично виявляти зсув вхідних даних (**Data Drift**).
 
-3. Натренуйте модель:
-   ```bash
-   python -m ml.train
+---
 
-4. Запустіть сервер:
-   ```bash
-   uvicorn app.maiin:app --reload
+##  Технологічний стек
 
-Посилання на деплой
+* **FastAPI** — веб-сервер для ML API
+* **Prometheus** — збір і зберігання метрик
+* **Docker & Docker Compose** — контейнеризація
+* **SciPy (KS-test)** — статистичний аналіз дрифту
+* **python-json-logger** — структуроване логування
+* **Evidently AI** — генерація HTML-звітів
 
-- Публічна адреса сервісу: https://mlops2-maya.onrender.com
-- Статус моделі: https://mlops2-maya.onrender.com/health
-- Документація API (Swagger): https://mlops2-maya.onrender.com/docs
+---
+
+##  Реалізовані метрики
+
+Метрики доступні за ендпоінтом `/metrics` (Prometheus):
+
+| Метрика                         | Тип       | Опис                                                   |
+| ------------------------------- | --------- | ------------------------------------------------------ |
+| `ml_predictions_total`          | Counter   | Кількість прогнозів (з мітками `class_name`, `status`) |
+| `ml_prediction_latency_seconds` | Histogram | Час обробки запиту (0.005с – 5.0с)                     |
+| `ml_prediction_confidence`      | Histogram | Розподіл імовірностей прогнозів                        |
+| `ml_errors_total`               | Counter   | Кількість помилок                                      |
+| `ml_model_loaded`               | Gauge     | Статус моделі (1 — OK, 0 — помилка)                    |
+| `ml_drift_checks_total`         | Counter   | Кількість перевірок дрифту                             |
+| `ml_drift_detected_total`       | Counter   | Кількість виявлених зсувів                             |
+
+---
+
+##  Drift Detection
+
+Для виявлення зсуву даних реалізовано клас `DriftDetector`, який використовує **двовибірковий тест Колмогорова-Смирнова (KS-test)**.
+
+Принцип роботи:
+
+* Поточні дані порівнюються з еталонними (reference), збереженими під час тренування
+* Якщо:
+
+```
+p-value < α
+```
+
+(за замовчуванням `α = 0.05`), фіксується **data drift**
+
+---
+
+##  Приклади запитів
+
+### 1. Прогноз
+
+```bash
+curl -X POST http://localhost:8000/predict \
+-H "Content-Type: application/json" \
+-d '{"sepal_length":5.1,"sepal_width":3.5,"petal_length":1.4,"petal_width":0.2}'
+```
+
+---
+
+### 2. Перевірка Drift
+
+```bash
+curl -X POST http://localhost:8000/check-drift \
+-H "Content-Type: application/json" \
+-d '{
+  "samples": [[9.0, 8.0, 8.0, 5.0], [9.5, 7.5, 8.5, 5.5]],
+  "alpha": 0.05
+}'
+```
+
+---
+
+##  Логування
+
+У системі використовується структуроване логування у форматі JSON:
+
+```json
+{
+  "timestamp": "2026-05-03T14:00:00Z",
+  "level": "INFO",
+  "event": "prediction",
+  "class_name": "virginica",
+  "probability": 0.98,
+  "variant": 19
+}
+```
+
+Події, що логуються:
+
+* старт сервісу
+* інференс (predict)
+* перевірка дрифту
+
+---
+
+##  Запуск проєкту
+
+### 1. Підготовка моделі
+
+```bash
+python -m ml.train
+```
+
+---
+
+### 2. Запуск моніторингу
+
+```bash
+cd monitoring
+docker-compose -f docker-compose.monitoring.yml up --build
+```
+
+---
+
+##  Доступ до сервісів
+
+* ML API: http://localhost:8000
+* Prometheus: http://localhost:9090
+
+У Prometheus використовуйте вкладку **Graph** для аналізу метрик.
+
+---
+
+##  Генерація звіту Evidently
+
+```bash
+python scripts/evidently_report.py
+```
+
+Результат:
+
+```
+drift_report.html
+```
+
+---
+
+##  Висновки
+
+У ході лабораторної роботи було побудовано спостережуваний ML-сервіс із повним циклом моніторингу.
+
+Основні досягнення:
+
+* інтеграція Prometheus для технічних та ML-метрик
+* реалізація автоматичного виявлення Data Drift
+* структуроване логування для аналізу подій
+* генерація звітів для дослідження якості даних
+
+Реалізований підхід є важливою частиною **MLOps-практик**, оскільки дозволяє:
+
+* оперативно виявляти деградацію моделі
+* контролювати стабільність системи
+* забезпечувати надійність ML-сервісів у продакшені
+
+---
